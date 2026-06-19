@@ -1,5 +1,5 @@
 /*
- * Tinkers' Planner - NeoForge 1.21.1 port build file.
+ * Neo Planner - NeoForge 1.21.1 build file.
  * Original ForgeGradle 1.18.2 build by Tiffit / SpikyStars.
  * Converted to ModDevGradle for NeoForge 1.21.1, matching the NeoTinkersConstruct / NeoMantle ports.
  */
@@ -12,10 +12,10 @@ plugins {
 }
 
 group = 'net.tiffit.tconplanner'
-// version = <mc>-<upstream planner version>-v<fork version>, e.g. 1.21.1-1.2.0-v1.0
+// version = <mc>-<upstream planner version>-v<fork version>, e.g. 1.21.1-1.2.0-v1.1
 version = "${minecraft_version}-${mod_version}-v${fork_version}"
 base {
-    archivesName = 'NeoTConPlanner'
+    archivesName = 'NeoPlanner'
 }
 
 java {
@@ -33,6 +33,31 @@ repositories {
         content { includeGroup 'curse.maven' }
     }
 }
+
+// --- Neo Planner depends on the published NeoForge 1.21.1 releases of Neo Tinkers' Construct
+// --- and Neo Mantle. Their jars are fetched from the GitHub releases tab into libs/ (gitignored)
+// --- by the downloadModDeps task below, then put on the compile + dev-run classpath.
+def mantleJar = file("libs/NeoMantle-${minecraft_version}-${mantle_version}-v${mantle_fork}.jar")
+def tconstructJar = file("libs/NeoTinkersConstruct-${minecraft_version}-${tconstruct_version}-v${tconstruct_fork}.jar")
+
+tasks.register('downloadModDeps') {
+    description = "Fetch the Neo Tinkers' Construct + Neo Mantle release jars into libs/"
+    outputs.files(mantleJar, tconstructJar)
+    doLast {
+        file('libs').mkdirs()
+        def downloads = [
+            [mantleJar,     "https://github.com/vancevoj/neomantle/releases/download/v${mantle_fork}/${mantleJar.name}"],
+            [tconstructJar, "https://github.com/vancevoj/NeoTinkersConstruct/releases/download/v${tconstruct_fork}/${tconstructJar.name}"],
+        ]
+        downloads.each { dest, url ->
+            if (!dest.exists()) {
+                logger.lifecycle("Downloading ${url}")
+                ant.get(src: url, dest: dest)
+            }
+        }
+    }
+}
+tasks.named('compileJava').configure { dependsOn 'downloadModDeps' }
 
 neoForge {
     version = neoforge_version
@@ -53,17 +78,15 @@ neoForge {
     }
 
     mods {
-        tconplanner {
+        neoplanner {
             sourceSet sourceSets.main
         }
     }
 }
 
 dependencies {
-    // Tinkers' Construct + Mantle: substituted by the ../NeoTinkersConstruct composite build
-    // (which itself composite-includes ../Mantle). See settings.gradle.
-    implementation "slimeknights.tconstruct:TConstruct:${minecraft_version}-${tconstruct_version}"
-    implementation "slimeknights.mantle:Mantle:${minecraft_version}-${mantle_version}"
+    // Neo Tinkers' Construct + Neo Mantle (1.21.1 release jars from libs/, see downloadModDeps).
+    implementation files(tconstructJar, mantleJar)
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -86,7 +109,7 @@ tasks.named('processResources', ProcessResources).configure {
 tasks.named('jar', Jar).configure {
     manifest {
         attributes([
-                "Specification-Title"   : "Tinkers' Planner",
+                "Specification-Title"   : "Neo Planner",
                 "Specification-Vendor"  : "Tiffit",
                 "Specification-Version" : "1",
                 "Implementation-Title"  : project.name,

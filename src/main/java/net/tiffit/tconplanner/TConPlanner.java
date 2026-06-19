@@ -16,7 +16,7 @@ import java.io.File;
 @Mod(value = TConPlanner.MODID, dist = Dist.CLIENT)
 public class TConPlanner {
     public static final Logger LOGGER = LogManager.getLogger();
-    public static final String MODID = "tconplanner";
+    public static final String MODID = "neoplanner";
 
     public static PlannerData DATA;
 

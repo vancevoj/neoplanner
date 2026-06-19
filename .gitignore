@@ -21,5 +21,8 @@ build
 eclipse
 run
 
+# Sibling release jars fetched by the downloadModDeps task
+libs
+
 # Files from Forge MDK
 forge*changelog.txt
