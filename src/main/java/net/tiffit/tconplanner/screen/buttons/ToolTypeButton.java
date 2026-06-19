@@ -1,8 +1,6 @@
 package net.tiffit.tconplanner.screen.buttons;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.tiffit.tconplanner.api.TCTool;
 import net.tiffit.tconplanner.screen.PlannerScreen;
@@ -15,7 +13,7 @@ public class ToolTypeButton extends Button {
     private final PlannerScreen parent;
 
     public ToolTypeButton(int index, TCTool tool, PlannerScreen parent) {
-        super(0, 0, 18, 18, tool.getDescription(), button -> parent.setSelectedTool(index));
+        super(0, 0, 18, 18, tool.getDescription(), button -> parent.setSelectedTool(index), Button.DEFAULT_NARRATION);
         this.tool = tool;
         this.index = index;
         this.parent = parent;
@@ -23,18 +21,15 @@ public class ToolTypeButton extends Button {
     }
 
     @Override
-    public void renderButton(PoseStack stack, int mouseX, int mouseY, float p_230431_4_) {
-        PlannerScreen.bindTexture();
-        RenderSystem.enableBlend();
-        parent.blit(stack, x, y, 213, 41 + (selected ? 18 : 0), 18, 18);
-        Minecraft.getInstance().getItemRenderer().renderGuiItem(tool.getRenderTool(), x + 1, y + 1);
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        gui.blit(PlannerScreen.TEXTURE, getX(), getY(), 213, 41 + (selected ? 18 : 0), 18, 18);
+        gui.renderItem(tool.getRenderTool(), getX() + 1, getY() + 1);
         if(isHovered){
-            renderToolTip(stack, mouseX, mouseY);
+            renderToolTip(gui, mouseX, mouseY);
         }
     }
 
-    @Override
-    public void renderToolTip(PoseStack stack, int mouseX, int mouseY) {
-        parent.postRenderTasks.add(() -> parent.renderItemTooltip(stack, tool.getRenderTool(), mouseX, mouseY));
+    public void renderToolTip(GuiGraphics gui, int mouseX, int mouseY) {
+        parent.postRenderTasks.add(() -> parent.renderItemTooltip(gui, tool.getRenderTool(), mouseX, mouseY));
     }
 }

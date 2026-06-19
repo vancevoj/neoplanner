@@ -1,16 +1,14 @@
 package net.tiffit.tconplanner.screen.ext;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.tiffit.tconplanner.EventListener;
 import net.tiffit.tconplanner.screen.buttons.BookmarkedButton;
 
@@ -20,41 +18,38 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ExtItemStackButton extends Button {
-    public static ResourceLocation BACKGROUND = new ResourceLocation("tconstruct", "textures/gui/tinker_station.png");
+    public static ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath("tconstruct", "textures/gui/tinker_station.png");
 
     private final ItemStack stack;
     private final Screen screen;
     private final List<Component> tooltips;
 
     public ExtItemStackButton(int x, int y, ItemStack stack, List<Component> tooltips, Button.OnPress action, Screen screen) {
-        super(x, y, 16, 16, new TextComponent(""), action, (btn, ms, mx, my) -> {});
+        super(x, y, 16, 16, Component.literal(""), action, Button.DEFAULT_NARRATION);
         this.stack = stack;
         this.screen = screen;
         this.tooltips = tooltips == null ? Collections.emptyList() : tooltips;
     }
 
     @Override
-    public void renderButton(PoseStack ms, int mouseX, int mouseY, float p_230431_4_) {
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
         Minecraft mc = screen.getMinecraft();
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderTexture(0, BACKGROUND);
-        screen.blit(ms, x - 1, y - 1, 194, 0, 18, 18);
+        gui.blit(BACKGROUND, getX() - 1, getY() - 1, 194, 0, 18, 18);
         if(!isHoveredOrFocused()){
-            GuiComponent.fill(ms, x, y, x + 16, y + 16, 0xff_a29b81);
+            gui.fill(getX(), getY(), getX() + 16, getY() + 16, 0xff_a29b81);
         }
-        mc.getItemRenderer().renderGuiItem(stack, x, y);
-        ms.pushPose();
-        RenderSystem.enableBlend();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 0.6f);
-        BookmarkedButton.STAR_ICON.render(screen, ms, x + 2, y + 2);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        ms.popPose();
+        gui.renderItem(stack, getX(), getY());
+        gui.pose().pushPose();
+        gui.setColor(1f, 1f, 1f, 0.6f);
+        BookmarkedButton.STAR_ICON.render(screen, gui, getX() + 2, getY() + 2);
+        gui.setColor(1f, 1f, 1f, 1f);
+        gui.pose().popPose();
         if (this.isHoveredOrFocused()) {
             EventListener.postRenderQueue.offer(() -> {
-                List<Component> result = Stream.concat(screen.getTooltipFromItem(stack).stream(), tooltips.stream()).collect(Collectors.toList());
-                screen.renderComponentTooltip(ms, result, mouseX, mouseY, mc.font);
+                List<Component> itemTip = stack.getTooltipLines(Item.TooltipContext.of(mc.level), mc.player, TooltipFlag.Default.NORMAL);
+                List<Component> result = Stream.concat(itemTip.stream(), tooltips.stream()).collect(Collectors.toList());
+                gui.renderComponentTooltip(mc.font, result, mouseX, mouseY);
             });
         }
     }
 }
-

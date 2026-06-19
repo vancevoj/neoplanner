@@ -1,10 +1,10 @@
 package net.tiffit.tconplanner.screen;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Widget;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,21 +15,21 @@ public class PlannerPanel extends AbstractWidget {
     protected final PlannerScreen parent;
 
     public PlannerPanel(int x, int y, int width, int height, PlannerScreen parent) {
-        super(x, y, width, height, new TextComponent(""));
+        super(x, y, width, height, Component.literal(""));
         this.parent = parent;
     }
 
     public void addChild(AbstractWidget widget){
-        widget.x += x;
-        widget.y += y;
+        widget.setX(widget.getX() + getX());
+        widget.setY(widget.getY() + getY());
         children.add(widget);
     }
 
     @Override
-    public void render(PoseStack stack, int mouseX, int mouseY, float p_230430_4_) {
-        this.isHovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
-        for (Widget child : children) {
-            child.render(stack, mouseX, mouseY, p_230430_4_);
+    protected void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        this.isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + this.width && mouseY < getY() + this.height;
+        for (Renderable child : children) {
+            child.render(gui, mouseX, mouseY, partialTick);
         }
     }
 
@@ -57,11 +57,11 @@ public class PlannerPanel extends AbstractWidget {
         return result;
     }
 
-    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         boolean result = false;
         for (AbstractWidget child : children) {
             if(child.isMouseOver(mouseX, mouseY)) {
-                if (child.mouseScrolled(mouseX, mouseY, scroll)) result = true;
+                if (child.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) result = true;
             }
         }
         return result;
@@ -92,7 +92,7 @@ public class PlannerPanel extends AbstractWidget {
     }
 
     @Override
-    public void updateNarration(NarrationElementOutput p_169152_) {
+    protected void updateWidgetNarration(NarrationElementOutput p_169152_) {
 
     }
 }

@@ -1,10 +1,8 @@
 package net.tiffit.tconplanner.screen.buttons;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.tiffit.tconplanner.screen.PlannerScreen;
 
@@ -16,7 +14,7 @@ public class TextButton extends Button {
     private Component tooltip = null;
 
     public TextButton(int x, int y, Component text, Runnable onPress, PlannerScreen parent) {
-        super(x, y, 58, 18, text, e -> {});
+        super(x, y, 58, 18, text, e -> {}, Button.DEFAULT_NARRATION);
         this.parent = parent;
         this.onPress = onPress;
     }
@@ -32,21 +30,19 @@ public class TextButton extends Button {
     }
 
     @Override
-    public void renderButton(PoseStack stack, int mouseX, int mouseY, float p_230431_4_) {
-        RenderSystem.enableBlend();
-        PlannerScreen.bindTexture();
-        RenderSystem.setShaderColor(((color & 0xff0000) >> 16)/255f, ((color & 0x00ff00) >> 8)/255f, (color & 0x0000ff)/255f,1f);
-        parent.blit(stack, x, y, 176, 183, width, height);
-        Screen.drawCenteredString(stack, Minecraft.getInstance().font, getMessage(), x + width/2, y + 5, isHovered ? 0xffffffff : 0xa0ffffff);
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        gui.setColor(((color & 0xff0000) >> 16)/255f, ((color & 0x00ff00) >> 8)/255f, (color & 0x0000ff)/255f,1f);
+        gui.blit(PlannerScreen.TEXTURE, getX(), getY(), 176, 183, width, height);
+        gui.setColor(1f, 1f, 1f, 1f);
+        gui.drawCenteredString(Minecraft.getInstance().font, getMessage(), getX() + width/2, getY() + 5, isHovered ? 0xffffffff : 0xa0ffffff);
         if(isHovered){
-            renderToolTip(stack, mouseX, mouseY);
+            renderToolTip(gui, mouseX, mouseY);
         }
     }
 
-    @Override
-    public void renderToolTip(PoseStack stack, int mouseX, int mouseY) {
+    public void renderToolTip(GuiGraphics gui, int mouseX, int mouseY) {
         if(tooltip != null) {
-            parent.postRenderTasks.add(() -> parent.renderTooltip(stack, tooltip, mouseX, mouseY));
+            parent.postRenderTasks.add(() -> gui.renderTooltip(parent.getFont(), tooltip, mouseX, mouseY));
         }
     }
 

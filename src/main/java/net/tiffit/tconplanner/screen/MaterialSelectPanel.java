@@ -46,7 +46,8 @@ public class MaterialSelectPanel extends PlannerPanel{
         addChild(leftPage);
         addChild(rightPage);
         //Add sorting buttons
-        Class<? extends IMaterialStats> statClass = MaterialRegistry.getClassForStat(part.getStatType());
+        IMaterialStats defaultStats = MaterialRegistry.getInstance().getDefaultStats(part.getStatType());
+        Class<? extends IMaterialStats> statClass = defaultStats == null ? null : defaultStats.getClass();
         if(statClass != null){
             List<MaterialSort<?>> sorts = MaterialSort.MAP.getOrDefault(statClass, Lists.newArrayList());
             int startX = width/2 - 6*sorts.size();

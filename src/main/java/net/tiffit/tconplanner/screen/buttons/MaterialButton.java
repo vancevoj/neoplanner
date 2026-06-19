@@ -1,8 +1,7 @@
 package net.tiffit.tconplanner.screen.buttons;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -10,8 +9,8 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.tiffit.tconplanner.data.Blueprint;
@@ -22,7 +21,7 @@ import slimeknights.tconstruct.library.materials.MaterialRegistry;
 import slimeknights.tconstruct.library.materials.definition.IMaterial;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.recipe.tinkerstation.ValidatedResult;
+import slimeknights.tconstruct.library.recipe.RecipeResult;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.part.ToolPartItem;
 
@@ -38,36 +37,38 @@ public class MaterialButton extends Button {
     public Component errorText;
 
     public MaterialButton(int index, IMaterial material, ItemStack stack, int x, int y, PlannerScreen parent){
-        super(x, y, 16, 16, stack.getHoverName(), button -> parent.setPart(material));
+        super(x, y, 16, 16, stack.getHoverName(), button -> parent.setPart(material), Button.DEFAULT_NARRATION);
         this.material = material;
         this.stack = stack;
         this.parent = parent;
         if(parent.blueprint.isComplete()){
             Blueprint cloned = parent.blueprint.clone();
             cloned.materials[parent.selectedPart] = material;
-            ValidatedResult result = ToolStack.from(cloned.createOutput()).validate();
-            if(!result.hasError())result = cloned.validate();
-            if(result.hasError())errorText = result.getMessage().copy().withStyle(ChatFormatting.DARK_RED);
+            Component err = ToolStack.from(cloned.createOutput()).tryValidate();
+            if(err == null){
+                RecipeResult<?> result = cloned.validate();
+                if(result.hasError())err = result.getMessage();
+            }
+            if(err != null)errorText = err.copy().withStyle(ChatFormatting.DARK_RED);
         }
     }
 
     @Override
-    public void renderButton(PoseStack stack, int mouseX, int mouseY, float p_230431_4_) {
-        Minecraft.getInstance().getItemRenderer().renderGuiItem(this.stack, x, y);
-        int right = x + width;
-        int bottom = y + height;
-        if(selected) Screen.fill(stack, x, y, right, bottom, 0x55_00_ff_00);
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        gui.renderItem(this.stack, getX(), getY());
+        int right = getX() + width;
+        int bottom = getY() + height;
+        if(selected) gui.fill(getX(), getY(), right, bottom, 0x55_00_ff_00);
         if(errorText != null){
-            Screen.fill(stack, x, y, right, bottom, 0x55_ff_00_00);
+            gui.fill(getX(), getY(), right, bottom, 0x55_ff_00_00);
         }
         if(isHovered){
-            Screen.fill(stack, x, y, right, bottom, 0x80_ffea00);
-            renderToolTip(stack, mouseX, mouseY);
+            gui.fill(getX(), getY(), right, bottom, 0x80_ffea00);
+            renderToolTip(gui, mouseX, mouseY);
         }
     }
 
-    @Override
-    public void renderToolTip(PoseStack ms, int mouseX, int mouseY) {
+    public void renderToolTip(GuiGraphics gui, int mouseX, int mouseY) {
         if(errorText == null) {
             parent.postRenderTasks.add(() -> {
                 List<Component> tooltip = new ArrayList<>();
@@ -77,22 +78,22 @@ public class MaterialButton extends Button {
                     List<ModifierEntry> entries = MaterialRegistry.getInstance().getTraits(material.getIdentifier(), part.getStatType());
                     for (ModifierEntry entry : entries) {
                         Modifier modifier = entry.getModifier();
-                        tooltip.add(new TextComponent("").append(modifier.getDisplayName(entry.getLevel())).withStyle(ChatFormatting.UNDERLINE));
+                        tooltip.add(Component.empty().append(modifier.getDisplayName(entry.getLevel())).withStyle(ChatFormatting.UNDERLINE));
                         TextColor c = TextColor.fromRgb(modifier.getColor());
                         for (Component comp : modifier.getDescriptionList(entry.getLevel())) {
-                            tooltip.add(new TextComponent("").append(comp).withStyle(Style.EMPTY.withColor(c)));
+                            tooltip.add(Component.empty().append(comp).withStyle(Style.EMPTY.withColor(c)));
                         }
                     }
                 }else{
-                    tooltip.addAll(stack.getTooltipLines(parent.getMinecraft().player, TooltipFlag.Default.NORMAL));
+                    tooltip.addAll(stack.getTooltipLines(Item.TooltipContext.of(parent.getMinecraft().level), parent.getMinecraft().player, TooltipFlag.Default.NORMAL));
                     if(!Screen.hasControlDown()){
                         tooltip.add(TranslationUtil.createComponent("parts.modifier_descriptions", TConstruct.makeTranslation("key", "ctrl").withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC)));
                     }
                 }
-                parent.renderComponentTooltip(ms, tooltip, mouseX, mouseY);
+                gui.renderComponentTooltip(parent.getFont(), tooltip, mouseX, mouseY);
             });
         }else {
-            parent.postRenderTasks.add(() -> parent.renderTooltip(ms, errorText, mouseX, mouseY));
+            parent.postRenderTasks.add(() -> gui.renderTooltip(parent.getFont(), errorText, mouseX, mouseY));
         }
     }
 

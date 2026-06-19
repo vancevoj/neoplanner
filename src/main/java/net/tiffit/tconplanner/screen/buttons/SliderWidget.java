@@ -1,11 +1,11 @@
 package net.tiffit.tconplanner.screen.buttons;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.tiffit.tconplanner.screen.PlannerScreen;
 
@@ -20,7 +20,7 @@ public class SliderWidget extends AbstractWidget {
     private int value;
 
     public SliderWidget(int x, int y, int width, int height, Consumer<Integer> listener, int min, int max, int value, PlannerScreen parent) {
-        super(x, y, width, height, new TextComponent(""));
+        super(x, y, width, height, Component.literal(""));
         this.parent = parent;
         this.listener = listener;
         this.min = min;
@@ -30,19 +30,18 @@ public class SliderWidget extends AbstractWidget {
     }
 
     @Override
-    public void renderButton(PoseStack stack, int mouseX, int mouseY, float partialTick) {
-        int center = y + height/2;
-        PlannerScreen.bindTexture();
-        for(int dx = x - 2; dx < x + width + 2; dx++){
-            parent.blit(stack, dx, center - 2, 176, 78, 1, 4);
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        int center = getY() + height/2;
+        for(int dx = getX() - 2; dx < getX() + width + 2; dx++){
+            gui.blit(PlannerScreen.TEXTURE, dx, center - 2, 176, 78, 1, 4);
         }
-        int sliderX = x + (int)(width*percent);
-        parent.blit(stack, sliderX - 2, y, 178, 78, 4, 20);
+        int sliderX = getX() + (int)(width*percent);
+        gui.blit(PlannerScreen.TEXTURE, sliderX - 2, getY(), 178, 78, 4, 20);
         Font font = Minecraft.getInstance().font;
         int minValSize = font.width(min + "");
-        drawString(stack, font, min + "", x - minValSize - 5, y + 6, 0xff_ff_ff_ff);
-        drawString(stack, font, max + "", x + width + 5, y + 6, 0xff_ff_ff_ff);
-        drawCenteredString(stack, font, value + "", sliderX, y + 22, 0xff_ff_ff_ff);
+        gui.drawString(font, min + "", getX() - minValSize - 5, getY() + 6, 0xff_ff_ff_ff);
+        gui.drawString(font, max + "", getX() + width + 5, getY() + 6, 0xff_ff_ff_ff);
+        gui.drawCenteredString(font, value + "", sliderX, getY() + 22, 0xff_ff_ff_ff);
     }
 
     @Override
@@ -52,20 +51,20 @@ public class SliderWidget extends AbstractWidget {
 
     @Override
     protected void onDrag(double mx, double my, double dx, double dy) {
-        if(mx >= x - 5 && my >= y && mx <= x + width + 5 && my <= y + width) {
+        if(mx >= getX() - 5 && my >= getY() && mx <= getX() + width + 5 && my <= getY() + width) {
             updateVal(mx);
         }
     }
 
     private void updateVal(double mouseX){
-        percent = Mth.clamp((mouseX - x)/width, 0, 1);
+        percent = Mth.clamp((mouseX - getX())/width, 0, 1);
         int oldVal = value;
         value = (int)Mth.clamp((max-min)*percent + min, min, max);
         if(value != oldVal)listener.accept(value);
     }
 
     @Override
-    public void updateNarration(NarrationElementOutput p_169152_) {
+    protected void updateWidgetNarration(NarrationElementOutput p_169152_) {
 
     }
 }

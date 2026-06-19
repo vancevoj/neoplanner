@@ -1,15 +1,15 @@
 package net.tiffit.tconplanner.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.tiffit.tconplanner.TConPlanner;
 import net.tiffit.tconplanner.api.TCTool;
@@ -20,7 +20,6 @@ import net.tiffit.tconplanner.util.MaterialSort;
 import net.tiffit.tconplanner.util.ModifierStack;
 import net.tiffit.tconplanner.util.TranslationUtil;
 import org.lwjgl.glfw.GLFW;
-import slimeknights.mantle.recipe.helper.RecipeHelper;
 import slimeknights.tconstruct.library.materials.MaterialRegistry;
 import slimeknights.tconstruct.library.materials.definition.IMaterial;
 import slimeknights.tconstruct.library.recipe.TinkerRecipeTypes;
@@ -36,7 +35,9 @@ import java.util.stream.Collectors;
 
 public class PlannerScreen extends Screen {
 
-    public static ResourceLocation TEXTURE = new ResourceLocation(TConPlanner.MODID, "textures/gui/planner.png");
+    public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(TConPlanner.MODID, "textures/gui/planner.png");
+    /** 1.21 recipes have no getId(); we capture ids from RecipeHolders here keyed by recipe instance. */
+    private static final Map<IDisplayModifierRecipe, ResourceLocation> RECIPE_IDS = new IdentityHashMap<>();
     private final HashMap<String, Object> cache = new HashMap<>();
     public Deque<Runnable> postRenderTasks = new ArrayDeque<>();
     private final TinkerStationScreen child;
@@ -73,11 +74,12 @@ public class PlannerScreen extends Screen {
 
     public PlannerScreen(TinkerStationScreen child, ToolStack stack) {
         this(child);
-        Optional<TCTool> optionalTCTool = TCTool.getTools().stream().filter(tool -> tool.getModifiable().getToolDefinition().getId().equals(stack.getDefinition().getId())).findAny();
+        ItemStack imported = stack.createStack();
+        Optional<TCTool> optionalTCTool = TCTool.getTools().stream().filter(tool -> tool.getItem() == imported.getItem()).findAny();
         if(optionalTCTool.isPresent()){
             blueprint = new Blueprint(optionalTCTool.get());
             for (int i = 0; i < blueprint.materials.length; i++) {
-                blueprint.materials[i] = stack.getMaterial(i).get();
+                blueprint.materials[i] = stack.getMaterials().get(i).get();
             }
             selectedPart = -1;
         }
@@ -90,6 +92,10 @@ public class PlannerScreen extends Screen {
         left = width / 2 - guiWidth/2;
         top = height / 2 - guiHeight/2;
         refresh();
+    }
+
+    public Font getFont(){
+        return font;
     }
 
     public void refresh(){
@@ -117,13 +123,12 @@ public class PlannerScreen extends Screen {
     }
 
     @Override
-    public void render(PoseStack stack, int mouseX, int mouseY, float partialTick) {
-        renderBackground(stack);
-        bindTexture();
-        this.blit(stack, left, top, 0, 0, guiWidth, guiHeight);
-        drawCenteredString(stack, font, titleText, left + guiWidth / 2, top + 7, 0xffffffff);
+    public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        renderBackground(gui, mouseX, mouseY, partialTick);
+        gui.blit(TEXTURE, left, top, 0, 0, guiWidth, guiHeight);
+        gui.drawCenteredString(font, titleText, left + guiWidth / 2, top + 7, 0xffffffff);
 
-        super.render(stack, mouseX, mouseY, partialTick);
+        super.render(gui, mouseX, mouseY, partialTick);
         Runnable task;
         while((task = postRenderTasks.poll()) != null)task.run();
     }
@@ -174,20 +179,14 @@ public class PlannerScreen extends Screen {
         return false;
     }
 
-    public void renderItemTooltip(PoseStack mstack, ItemStack stack, int x, int y) {
-        renderTooltip(mstack, stack, x, y);
+    public void renderItemTooltip(GuiGraphics gui, ItemStack stack, int x, int y) {
+        gui.renderTooltip(font, stack, x, y);
     }
 
 
     @Override
     public void onClose() {
         minecraft.setScreen(child);
-    }
-
-    public static void bindTexture(){
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderTexture(0, TEXTURE);
     }
 
     public void bookmarkCurrent(){
@@ -243,10 +242,10 @@ public class PlannerScreen extends Screen {
         if(blueprint != null){
             setBlueprint(new Blueprint(blueprint.tool));
             Random r = new Random();
-            List<IMaterial> materials = new ArrayList<>(MaterialRegistry.getMaterials());
+            List<IMaterial> materials = new ArrayList<>(MaterialRegistry.getInstance().getVisibleMaterials());
             for (int i = 0; i < blueprint.parts.length; i++) {
                 IToolPart part = blueprint.parts[i];
-                List<IMaterial> usable = materials.stream().filter(part::canUseMaterial).collect(Collectors.toList());
+                List<IMaterial> usable = materials.stream().filter(mat -> part.canUseMaterial(mat.getIdentifier())).collect(Collectors.toList());
                 if(usable.size() > 0)blueprint.materials[i] = usable.get(r.nextInt(usable.size()));
             }
             selectedModifier = null;
@@ -289,16 +288,22 @@ public class PlannerScreen extends Screen {
         return false;
     }
 
+    /** Looks up the recipe id captured during {@link #getModifierRecipes()}. */
+    public static ResourceLocation getRecipeId(IDisplayModifierRecipe recipe){
+        return RECIPE_IDS.get(recipe);
+    }
+
     public static List<IDisplayModifierRecipe> getModifierRecipes(){
         RecipeManager recipeManager = Minecraft.getInstance().level.getRecipeManager();
-        List<IDisplayModifierRecipe> jeiRecipes = RecipeHelper.getJEIRecipes(recipeManager, TinkerRecipeTypes.TINKER_STATION.get(), IDisplayModifierRecipe.class);
+        RECIPE_IDS.clear();
         List<IDisplayModifierRecipe> cleanedList = new ArrayList<>();
-        for (IDisplayModifierRecipe recipe : jeiRecipes) {
-            if(recipe instanceof ITinkerStationRecipe){
+        for (RecipeHolder<ITinkerStationRecipe> holder : recipeManager.getAllRecipesFor(TinkerRecipeTypes.TINKER_STATION.get())) {
+            if(holder.value() instanceof IDisplayModifierRecipe recipe){
+                RECIPE_IDS.putIfAbsent(recipe, holder.id());
                 boolean contains = cleanedList.stream().anyMatch(recipe1 ->
                         recipe1.getDisplayResult().getModifier().equals(recipe.getDisplayResult().getModifier()) &&
                                 Objects.equals(recipe1.getSlots(), recipe.getSlots()) &&
-                                recipe1.getMaxLevel() == recipe.getMaxLevel());
+                                recipe1.getLevel().max() == recipe.getLevel().max());
                 if(!contains)cleanedList.add(recipe);
             }
         }

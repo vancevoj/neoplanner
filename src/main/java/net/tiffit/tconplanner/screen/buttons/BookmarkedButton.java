@@ -1,11 +1,8 @@
 package net.tiffit.tconplanner.screen.buttons;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.tiffit.tconplanner.data.Blueprint;
 import net.tiffit.tconplanner.screen.PlannerScreen;
@@ -23,7 +20,7 @@ public class BookmarkedButton extends Button {
     private boolean selected;
 
     public BookmarkedButton(int index, Blueprint blueprint, boolean starred, PlannerScreen parent){
-        super(0, 0, 18, 18, new TextComponent(""), button -> parent.setBlueprint(blueprint.clone()));
+        super(0, 0, 18, 18, Component.literal(""), button -> parent.setBlueprint(blueprint.clone()), Button.DEFAULT_NARRATION);
         this.index = index;
         this.blueprint = blueprint;
         this.starred = starred;
@@ -33,26 +30,22 @@ public class BookmarkedButton extends Button {
     }
 
     @Override
-    public void renderButton(PoseStack stack, int mouseX, int mouseY, float p_230431_4_) {
-        PlannerScreen.bindTexture();
-        RenderSystem.enableBlend();
-        parent.blit(stack, x, y, 213, 41 + (selected ? 18 : 0), 18, 18);
-        ItemRenderer renderer = Minecraft.getInstance().getItemRenderer();
-        renderer.renderGuiItem(this.stack, x + 1, y + 1);
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        gui.blit(PlannerScreen.TEXTURE, getX(), getY(), 213, 41 + (selected ? 18 : 0), 18, 18);
+        gui.renderItem(this.stack, getX() + 1, getY() + 1);
         if(starred){
-            stack.pushPose();
-            stack.translate(x + 11, y + 11, 105);
-            stack.scale(0.5f, 0.5f, 0.5f);
-            STAR_ICON.render(parent, stack, 0, 0);
-            stack.popPose();
+            gui.pose().pushPose();
+            gui.pose().translate(getX() + 11, getY() + 11, 105);
+            gui.pose().scale(0.5f, 0.5f, 0.5f);
+            STAR_ICON.render(parent, gui, 0, 0);
+            gui.pose().popPose();
         }
         if(isHovered){
-            renderToolTip(stack, mouseX, mouseY);
+            renderToolTip(gui, mouseX, mouseY);
         }
     }
 
-    @Override
-    public void renderToolTip(PoseStack stack, int mouseX, int mouseY) {
-        parent.postRenderTasks.add(() -> parent.renderItemTooltip(stack, this.stack, mouseX, mouseY));
+    public void renderToolTip(GuiGraphics gui, int mouseX, int mouseY) {
+        parent.postRenderTasks.add(() -> parent.renderItemTooltip(gui, this.stack, mouseX, mouseY));
     }
 }

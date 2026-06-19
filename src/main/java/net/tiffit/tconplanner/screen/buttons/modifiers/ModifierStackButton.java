@@ -1,14 +1,11 @@
 package net.tiffit.tconplanner.screen.buttons.modifiers;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.item.ItemStack;
 import net.tiffit.tconplanner.data.ModifierInfo;
 import net.tiffit.tconplanner.screen.PlannerScreen;
@@ -31,8 +28,8 @@ public class ModifierStackButton extends Button {
     private final int index;
 
     public ModifierStackButton(ModifierInfo modifierInfo, int index, int level, ItemStack display, PlannerScreen parent) {
-        super(0, 0, 100, 18, new TextComponent(""), e -> {
-        });
+        super(0, 0, 100, 18, Component.literal(""), e -> {
+        }, Button.DEFAULT_NARRATION);
         this.modifierInfo = modifierInfo;
         this.parent = parent;
         this.modifier = modifierInfo.modifier;
@@ -43,47 +40,44 @@ public class ModifierStackButton extends Button {
     }
 
     @Override
-    public void renderButton(PoseStack stack, int mouseX, int mouseY, float p_230431_4_) {
-        PlannerScreen.bindTexture();
-        RenderSystem.enableBlend();
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
         if(parent.selectedModifierStackIndex == index){
-            RenderSystem.setShaderColor(255/255f, 200/255f, 0f, 1f);
+            gui.setColor(255/255f, 200/255f, 0f, 1f);
         }
-        parent.blit(stack, x, y, 0, 224, 100, 18);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        Minecraft.getInstance().getItemRenderer().renderGuiItem(display, x + 1, y + 1);
+        gui.blit(PlannerScreen.TEXTURE, getX(), getY(), 0, 224, 100, 18);
+        gui.setColor(1f, 1f, 1f, 1f);
+        gui.renderItem(display, getX() + 1, getY() + 1);
         Font font = Minecraft.getInstance().font;
-        stack.pushPose();
-        stack.translate(x + 20, y + 2, 0);
+        gui.pose().pushPose();
+        gui.pose().translate(getX() + 20, getY() + 2, 0);
         float nameWidth = font.width(displayName);
         int maxWidth = width - 22;
         if (nameWidth > maxWidth) {
             float scale = maxWidth / nameWidth;
-            stack.scale(scale, scale, 1);
+            gui.pose().scale(scale, scale, 1);
         }
-        Screen.drawString(stack, font, displayName, 0, 0, 0xff_ff_ff_ff);
-        stack.popPose();
+        gui.drawString(font, displayName, 0, 0, 0xff_ff_ff_ff);
+        gui.pose().popPose();
 
-        stack.pushPose();
-        stack.translate(x + 20, y + 11, 0);
-        stack.scale(0.5f, 0.5f, 1);
+        gui.pose().pushPose();
+        gui.pose().translate(getX() + 20, getY() + 11, 0);
+        gui.pose().scale(0.5f, 0.5f, 1);
         if (recipe.getSlots() != null) {
             SlotType.SlotCount count = recipe.getSlots();
-            MutableComponent text = count.getCount() == 1 ? TranslationUtil.createComponent("modifiers.usedslot", count.getType().getDisplayName()) :
-                    TranslationUtil.createComponent("modifiers.usedslots", count.getCount(), count.getType().getDisplayName());
-            Screen.drawString(stack, font, text, 0, 0, 0xff_ff_ff_ff);
+            MutableComponent text = count.count() == 1 ? TranslationUtil.createComponent("modifiers.usedslot", count.type().getDisplayName()) :
+                    TranslationUtil.createComponent("modifiers.usedslots", count.count(), count.type().getDisplayName());
+            gui.drawString(font, text, 0, 0, 0xff_ff_ff_ff);
         }
-        stack.popPose();
+        gui.pose().popPose();
         if (isHovered) {
-            renderToolTip(stack, mouseX, mouseY);
+            renderToolTip(gui, mouseX, mouseY);
         }
     }
 
-    @Override
-    public void renderToolTip(PoseStack stack, int mouseX, int mouseY) {
+    public void renderToolTip(GuiGraphics gui, int mouseX, int mouseY) {
         parent.postRenderTasks.add(() -> {
             List<Component> tooltips = new ArrayList<>(modifier.getDescriptionList());
-            parent.renderComponentTooltip(stack, tooltips, mouseX, mouseY);
+            gui.renderComponentTooltip(parent.getFont(), tooltips, mouseX, mouseY);
         });
     }
 

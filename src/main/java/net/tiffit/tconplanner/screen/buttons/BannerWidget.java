@@ -1,7 +1,7 @@
 package net.tiffit.tconplanner.screen.buttons;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.sounds.SoundManager;
@@ -18,17 +18,16 @@ public class BannerWidget extends AbstractWidget {
     }
 
     @Override
-    public void renderButton(PoseStack stack, int mouseX, int mouseY, float p_230431_4_) {
-        PlannerScreen.bindTexture();
-        parent.blit(stack, x, y, 0, 205, width, height);
-        drawCenteredString(stack, Minecraft.getInstance().font, getMessage(), x + width/2, y + 5, 0xff_90_90_ff);
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        gui.blit(PlannerScreen.TEXTURE, getX(), getY(), 0, 205, width, height);
+        gui.drawCenteredString(Minecraft.getInstance().font, getMessage(), getX() + width/2, getY() + 5, 0xff_90_90_ff);
     }
 
     @Override
     public void playDownSound(SoundManager SoundManager) {}
 
     @Override
-    public void updateNarration(NarrationElementOutput p_169152_) {
+    protected void updateWidgetNarration(NarrationElementOutput p_169152_) {
 
     }
 }

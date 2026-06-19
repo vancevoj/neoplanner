@@ -1,24 +1,24 @@
 package net.tiffit.tconplanner;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class Config {
 
     public static final Config CONFIG;
-    public static final ForgeConfigSpec SPEC;
+    public static final ModConfigSpec SPEC;
 
-    public final ForgeConfigSpec.IntValue buttonX;
-    public final ForgeConfigSpec.IntValue buttonY;
+    public final ModConfigSpec.IntValue buttonX;
+    public final ModConfigSpec.IntValue buttonY;
 
-    public final ForgeConfigSpec.IntValue importButtonXAnvil;
-    public final ForgeConfigSpec.IntValue importButtonYAnvil;
+    public final ModConfigSpec.IntValue importButtonXAnvil;
+    public final ModConfigSpec.IntValue importButtonYAnvil;
 
-    public final ForgeConfigSpec.IntValue importButtonXStation;
-    public final ForgeConfigSpec.IntValue importButtonYStation;
-    public final ForgeConfigSpec.EnumValue<ScrollDirectionEnum> scrollDirection;
+    public final ModConfigSpec.IntValue importButtonXStation;
+    public final ModConfigSpec.IntValue importButtonYStation;
+    public final ModConfigSpec.EnumValue<ScrollDirectionEnum> scrollDirection;
 
-    public Config(ForgeConfigSpec.Builder builder){
+    public Config(ModConfigSpec.Builder builder){
         builder.push("UI Button");
         buttonX = builder.comment("X position of the \"Open Planner\" button. Default: 116").defineInRange("X Position", 116, -300, 300);
         buttonY = builder.comment("Y position of the \"Open Planner\" button. Default: 18").defineInRange("Y Position", 18, -300, 300);
@@ -33,7 +33,7 @@ public class Config {
     }
 
     static {
-        Pair<Config, ForgeConfigSpec> commonSpecPair = new ForgeConfigSpec.Builder().configure(Config::new);
+        Pair<Config, ModConfigSpec> commonSpecPair = new ModConfigSpec.Builder().configure(Config::new);
         CONFIG = commonSpecPair.getLeft();
         SPEC = commonSpecPair.getRight();
     }

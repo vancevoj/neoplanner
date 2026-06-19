@@ -1,14 +1,12 @@
 package net.tiffit.tconplanner.util;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.tiffit.tconplanner.TConPlanner;
 
 public class Icon {
-    private static final ResourceLocation ICONS = new ResourceLocation(TConPlanner.MODID, "textures/gui/icons.png");
+    private static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(TConPlanner.MODID, "textures/gui/icons.png");
 
     private final int x, y;
 
@@ -17,9 +15,7 @@ public class Icon {
         this.y = y;
     }
 
-    public void render(Screen screen, PoseStack stack, int x, int y){
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderTexture(0, ICONS);
-        screen.blit(stack, x, y, this.x*12, this.y*12, 12, 12);
+    public void render(Screen screen, GuiGraphics gui, int x, int y){
+        gui.blit(ICONS, x, y, this.x*12, this.y*12, 12, 12);
     }
 }

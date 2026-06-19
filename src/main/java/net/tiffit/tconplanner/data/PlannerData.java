@@ -2,6 +2,7 @@ package net.tiffit.tconplanner.data;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 
 import java.io.File;
@@ -59,7 +60,7 @@ public class PlannerData {
                 data.put("starred", cnbt);
             }
         }
-        NbtIo.writeCompressed(data, bookmarkFile);
+        NbtIo.writeCompressed(data, bookmarkFile.toPath());
     }
 
     public void firstLoad() throws IOException {
@@ -71,7 +72,7 @@ public class PlannerData {
     public void load() throws IOException {
         hasLoaded = true;
         saved.clear();
-        CompoundTag data = NbtIo.readCompressed(bookmarkFile);
+        CompoundTag data = NbtIo.readCompressed(bookmarkFile.toPath(), NbtAccounter.unlimitedHeap());
         ListTag nbt = data.getList("list", data.getId());
         for(int i = 0; i < nbt.size(); i++){
             CompoundTag tag = nbt.getCompound(i);

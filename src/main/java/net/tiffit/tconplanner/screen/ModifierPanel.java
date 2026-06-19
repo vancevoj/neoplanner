@@ -7,7 +7,6 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.tiffit.tconplanner.data.Blueprint;
@@ -20,10 +19,9 @@ import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.impl.DurabilityShieldModifier;
 import slimeknights.tconstruct.library.modifiers.impl.NoLevelsModifier;
-import slimeknights.tconstruct.library.recipe.modifiers.ModifierRecipeLookup;
+import slimeknights.tconstruct.library.recipe.RecipeResult;
 import slimeknights.tconstruct.library.recipe.modifiers.adding.IDisplayModifierRecipe;
 import slimeknights.tconstruct.library.recipe.tinkerstation.ITinkerStationRecipe;
-import slimeknights.tconstruct.library.recipe.tinkerstation.ValidatedResult;
 import slimeknights.tconstruct.library.tools.SlotType;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
@@ -43,19 +41,19 @@ public class ModifierPanel extends PlannerPanel{
         for (SlotType slotType : ValidSlots) {
             int slots = tool.getFreeSlots(slotType);
             List<Component> tooltips = new ArrayList<>();
-            Component coloredName = new TextComponent("")
+            Component coloredName = Component.empty()
                     .withStyle(Style.EMPTY.withColor(slotType.getColor()))
                     .append(slotType.getDisplayName())
-                    .append(new TextComponent("").withStyle(ChatFormatting.RESET));
+                    .append(Component.empty().withStyle(ChatFormatting.RESET));
             tooltips.add(TranslationUtil.createComponent("slots.available", coloredName));
-            tooltips.add(new TextComponent(""));
+            tooltips.add(Component.empty());
             tooltips.add(TranslationUtil.createComponent("modifiers.addcreativeslot").withStyle(ChatFormatting.GREEN));
             MutableComponent removeCreativeSlotTextComponent = TranslationUtil.createComponent("modifiers.removecreativeslot").withStyle(ChatFormatting.RED);
             if(slots == 0){
                 removeCreativeSlotTextComponent.withStyle(removeCreativeSlotTextComponent.getStyle().applyFormats(ChatFormatting.STRIKETHROUGH));
             }
             tooltips.add(removeCreativeSlotTextComponent);
-            MutableComponent slotsRemaining = new TextComponent("" + slots);
+            MutableComponent slotsRemaining = Component.literal("" + slots);
             int creativeSlots = parent.blueprint.creativeSlots.getOrDefault(slotType, 0);
             if(creativeSlots > 0){
                 slotsRemaining.append(" (+" + parent.blueprint.creativeSlots.get(slotType) + ")");
@@ -81,7 +79,7 @@ public class ModifierPanel extends PlannerPanel{
             List<ModifierInfo> modStack = modifierStack.getStack();
             Blueprint resultingBlueprint = parent.blueprint.clone();
             resultingBlueprint.modStack = modifierStack;
-            ValidatedResult validatedResult = resultingBlueprint.validate();
+            RecipeResult<?> validatedResult = resultingBlueprint.validate();
             boolean isValid = !validatedResult.hasError();
             for (int i = 0; i < modStack.size(); i++) {
                 ModifierInfo info = modStack.get(i);
@@ -89,7 +87,7 @@ public class ModifierPanel extends PlannerPanel{
                 levelCount.put(info.modifier.getId(), newLevel);
                 displayStack.addModifier(info.modifier.getId(), 1);
                 if (info.count != null) {
-                    displayStack.getPersistentData().addSlots(info.count.getType(), -info.count.getCount());
+                    displayStack.getPersistentData().addSlots(info.count.type(), -info.count.count());
                 }
                 displayStack.rebuildStats();
                 stackGroup.addChild(new ModifierStackButton(info, i, newLevel, displayStack.copy().createStack(), parent));
@@ -129,8 +127,8 @@ public class ModifierPanel extends PlannerPanel{
             }));
         } else { //Add/remove a modifier
             ModifierSelectButton modSelectButton = ModifierSelectButton.create(selectedModifier.recipe, tool, result, parent);
-            modSelectButton.x = modGroupStartX;
-            modSelectButton.y = modGroupStartY;
+            modSelectButton.setX(modGroupStartX);
+            modSelectButton.setY(modGroupStartY);
             addChild(modSelectButton);
 
             Modifier modifier = selectedModifier.modifier;
@@ -139,29 +137,33 @@ public class ModifierPanel extends PlannerPanel{
             addChild(new ModPreviewWidget(2 + 50 - 9, 50, result, parent));
             int arrowOffset = 11;
             ModLevelButton addButton = new ModLevelButton(2 + 50 + arrowOffset - 2, 50, 1, parent);
-            ValidatedResult validatedResultAdd = (modifier instanceof NoLevelsModifier || modifier instanceof DurabilityShieldModifier) && tool.getModifierLevel(modifier) >= 1 ?
-                    ValidatedResult.failure(KEY_MAX_LEVEL, modifier.getDisplayName(), 1) : tsrecipe.getValidatedResult(new DummyTinkersStationInventory(result));
-            if (!validatedResultAdd.isSuccess()) {
+            RecipeResult<?> validatedResultAdd;
+            if((modifier instanceof NoLevelsModifier || modifier instanceof DurabilityShieldModifier) && tool.getModifiers().getLevel(modifier.getId()) >= 1){
+                validatedResultAdd = RecipeResult.failure(KEY_MAX_LEVEL, modifier.getDisplayName(), 1);
+            }else{
+                validatedResultAdd = tsrecipe.getValidatedResult(new DummyTinkersStationInventory(result), Minecraft.getInstance().level.registryAccess());
+            }
+            if (validatedResultAdd.hasError()) {
                 addButton.disable(validatedResultAdd.getMessage().copy().setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
-                addChild(new ModPreviewWidget(addButton.x + addButton.getWidth() + 2, 50, ItemStack.EMPTY, parent));
+                addChild(new ModPreviewWidget(addButton.getX() + addButton.getWidth() + 2, 50, ItemStack.EMPTY, parent));
             } else if (blueprint.modStack.getIncrementalDiff(modifier) > 0) {
                 addButton.disable(TranslationUtil.createComponent("modifiers.error.incrementnotmax").setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
-                addChild(new ModPreviewWidget(addButton.x + addButton.getWidth() + 2, 50, ItemStack.EMPTY, parent));
+                addChild(new ModPreviewWidget(addButton.getX() + addButton.getWidth() + 2, 50, ItemStack.EMPTY, parent));
             } else {
                 Blueprint copy = blueprint.clone();
                 copy.modStack.push(selectedModifier);
-                addChild(new ModPreviewWidget(addButton.x + addButton.getWidth() + 2, 50, copy.createOutput(), parent));
+                addChild(new ModPreviewWidget(addButton.getX() + addButton.getWidth() + 2, 50, copy.createOutput(), parent));
             }
             addChild(addButton);
 
             ModLevelButton subtractButton = new ModLevelButton(2 + 50 - arrowOffset - 18, 50, -1, parent);
-            ValidatedResult validatedResultSubtract = ToolValidator.validateModRemoval(blueprint, tool, selectedModifier);
+            RecipeResult<ItemStack> validatedResultSubtract = ToolValidator.validateModRemoval(blueprint, tool, selectedModifier);
             if (validatedResultSubtract.hasError()) {
                 subtractButton.disable(((MutableComponent) validatedResultSubtract.getMessage()).setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }
-            addChild(new ModPreviewWidget(subtractButton.x - 2 - 18, 50, subtractButton.isDisabled() ? ItemStack.EMPTY : validatedResultSubtract.getResult(), parent));
+            addChild(new ModPreviewWidget(subtractButton.getX() - 2 - 18, 50, subtractButton.isDisabled() ? ItemStack.EMPTY : validatedResultSubtract.getResult(), parent));
             addChild(subtractButton);
-            int perLevel = ModifierRecipeLookup.getNeededPerLevel(modifier.getId());
+            int perLevel = selectedModifier.needed;
             if (perLevel > 0 && blueprint.modStack.getLevel(modifier) > 0) {
                 addChild(new SliderWidget(2 + 10, 70, 80, 20, val -> {
                     blueprint.modStack.setIncrementalDiff(modifier, perLevel - val);

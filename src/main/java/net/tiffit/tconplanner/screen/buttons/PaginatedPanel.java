@@ -1,8 +1,7 @@
 package net.tiffit.tconplanner.screen.buttons;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.screens.Screen;
 import net.tiffit.tconplanner.Config;
 import net.tiffit.tconplanner.screen.PlannerPanel;
 import net.tiffit.tconplanner.screen.PlannerScreen;
@@ -54,8 +53,8 @@ public class PaginatedPanel<T extends AbstractWidget> extends PlannerPanel {
         scrollPageHeight = height/(float)(totalPages+rows-1);
         for (int i = 0; i < children.size(); i++) {
             AbstractWidget widget = children.get(i);
-            widget.x = x + (i % columns) * (childWidth+spacing);
-            widget.y = y + (i / columns) * (childHeight+spacing);
+            widget.setX(getX() + (i % columns) * (childWidth+spacing));
+            widget.setY(getY() + (i / columns) * (childHeight+spacing));
         }
     }
 
@@ -80,20 +79,20 @@ public class PaginatedPanel<T extends AbstractWidget> extends PlannerPanel {
     }
 
     @Override
-    public void render(PoseStack stack, int mouseX, int mouseY, float p_230430_4_) {
-        super.render(stack, mouseX, mouseY, p_230430_4_);
+    protected void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        super.renderWidget(gui, mouseX, mouseY, partialTick);
         if(totalPages > 1) {
-            int scrollX = x + width - 3;
+            int scrollX = getX() + width - 3;
             int page = parent.getCacheValue(cachePrefix + ".page", 0);
-            Screen.fill(stack, scrollX, y, scrollX + 3, y + height, 0x0f_ffffff + (isHovered ? 0x0a_000000 : 0));
-            Screen.fill(stack, scrollX, y + (int)(scrollPageHeight*page), scrollX + 3, y + (int)(scrollPageHeight*(page+rows)), 0x0f_ffffff + (isHovered ? 0x0f_000000 : 0));
+            gui.fill(scrollX, getY(), scrollX + 3, getY() + height, 0x0f_ffffff + (isHovered ? 0x0a_000000 : 0));
+            gui.fill(scrollX, getY() + (int)(scrollPageHeight*page), scrollX + 3, getY() + (int)(scrollPageHeight*(page+rows)), 0x0f_ffffff + (isHovered ? 0x0f_000000 : 0));
         }
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if(totalPages > 1) {
-            if (mouseX >= x + width - 3 && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
-                int clickedPage = (int) Math.min(((mouseY - y) / height) * totalPages, totalPages - 1);
+            if (mouseX >= getX() + width - 3 && mouseX <= getX() + width && mouseY >= getY() && mouseY <= getY() + height) {
+                int clickedPage = (int) Math.min(((mouseY - getY()) / height) * totalPages, totalPages - 1);
                 setPage(clickedPage);
                 return true;
             }
@@ -101,9 +100,9 @@ public class PaginatedPanel<T extends AbstractWidget> extends PlannerPanel {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         boolean result = false;
-        double scrollAmount = scroll * Config.CONFIG.scrollDirection.get().mult;
+        double scrollAmount = scrollY * Config.CONFIG.scrollDirection.get().mult;
         int currentPage = parent.getCacheValue(cachePrefix + ".page", 0);
         if(scrollAmount > 0 && currentPage < totalPages){
             setPage(currentPage + 1);
@@ -112,7 +111,7 @@ public class PaginatedPanel<T extends AbstractWidget> extends PlannerPanel {
             setPage(currentPage - 1);
             result = true;
         }
-        if(super.mouseScrolled(mouseX, mouseY, scroll))result = true;
+        if(super.mouseScrolled(mouseX, mouseY, scrollX, scrollY))result = true;
         return result;
     }
 }

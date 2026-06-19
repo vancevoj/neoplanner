@@ -1,0 +1,38 @@
+modLoader="javafml"
+loaderVersion="${loader_range}"
+license="MIT License"
+issueTrackerURL="https://github.com/vancevoj/neotconplanner/issues"
+
+[[mods]]
+    modId="tconplanner"
+    version="${version}"
+    displayName="Neo Tinkers' Planner"
+    logoFile="logo.png"
+    authors="Tiffit, SpikyStars, vancevoj"
+    # Client-side mod: ignore version checks so it can connect to any server.
+    displayTest="IGNORE_ALL_VERSION"
+    description='''
+Tinkers' Planner is a client-side mod which allows you to try out different material combinations for tools before actually making the tool. Neo Tinkers' Planner is vancevoj's NeoForge 1.21.1 port of the original planner ${mod_version}.
+    '''
+    displayURL="https://github.com/vancevoj/neotconplanner"
+
+[[dependencies.tconplanner]]
+    modId="neoforge"
+    type="required"
+    versionRange="${neoforge_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.tconplanner]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.tconplanner]]
+    modId="tconstruct"
+    type="required"
+    versionRange="${tconstruct_range}"
+    ordering="NONE"
+    side="CLIENT"

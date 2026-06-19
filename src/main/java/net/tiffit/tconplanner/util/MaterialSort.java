@@ -6,6 +6,7 @@ import slimeknights.tconstruct.library.materials.MaterialRegistry;
 import slimeknights.tconstruct.library.materials.definition.IMaterial;
 import slimeknights.tconstruct.library.materials.stats.IMaterialStats;
 import slimeknights.tconstruct.library.materials.stats.MaterialStatsId;
+import slimeknights.tconstruct.library.utils.HarvestTiers;
 import slimeknights.tconstruct.tools.stats.HandleMaterialStats;
 import slimeknights.tconstruct.tools.stats.HeadMaterialStats;
 
@@ -50,16 +51,22 @@ public class MaterialSort<T extends IMaterialStats> {
         if((list = MAP.putIfAbsent(type, Lists.newArrayList(sort))) != null)list.add(sort);
     }
 
+    /** Orders head materials by harvest tier using TConstruct's tier ordering (TierSortingRegistry was removed in 1.21). */
+    private static int compareTier(HeadMaterialStats a, HeadMaterialStats b){
+        if(a.tier() == b.tier())return 0;
+        return HarvestTiers.max(a.tier(), b.tier()) == a.tier() ? 1 : -1;
+    }
+
     static {
-        add(HandleMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HandleMaterialStats::getDurability), "Durability Multiplier", new Icon(0, 1)));
-        add(HandleMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HandleMaterialStats::getMiningSpeed), "Mining Speed", new Icon(2, 1)));
-        add(HandleMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HandleMaterialStats::getAttackSpeed), "Attack Speed", new Icon(3, 1)));
-        add(HandleMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HandleMaterialStats::getAttackDamage), "Attack Damage", new Icon(4, 1)));
+        add(HandleMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HandleMaterialStats::durability), "Durability Multiplier", new Icon(0, 1)));
+        add(HandleMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HandleMaterialStats::miningSpeed), "Mining Speed", new Icon(2, 1)));
+        add(HandleMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HandleMaterialStats::meleeSpeed), "Attack Speed", new Icon(3, 1)));
+        add(HandleMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HandleMaterialStats::attackDamage), "Attack Damage", new Icon(4, 1)));
 
 
-        add(HeadMaterialStats.class, new MaterialSort<>(Comparator.comparingInt(HeadMaterialStats::getDurability), "Durability", new Icon(1, 1)));
-        add(HeadMaterialStats.class, new MaterialSort<>(Comparator.comparingInt(value -> value.getTier().getLevel()), "Harvest Level", new Icon(5, 1)));
-        add(HeadMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HeadMaterialStats::getMiningSpeed), "Mining Speed", new Icon(2, 1)));
-        add(HeadMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HeadMaterialStats::getAttack), "Attack Damage", new Icon(4, 1)));
+        add(HeadMaterialStats.class, new MaterialSort<>(Comparator.comparingInt(HeadMaterialStats::durability), "Durability", new Icon(1, 1)));
+        add(HeadMaterialStats.class, new MaterialSort<>(MaterialSort::compareTier, "Harvest Level", new Icon(5, 1)));
+        add(HeadMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HeadMaterialStats::miningSpeed), "Mining Speed", new Icon(2, 1)));
+        add(HeadMaterialStats.class, new MaterialSort<>(Comparator.comparingDouble(HeadMaterialStats::attack), "Attack Damage", new Icon(4, 1)));
     }
 }

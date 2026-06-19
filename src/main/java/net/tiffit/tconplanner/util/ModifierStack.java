@@ -10,8 +10,6 @@ import net.tiffit.tconplanner.data.ModifierInfo;
 import net.tiffit.tconplanner.screen.PlannerScreen;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.impl.IncrementalModifier;
-import slimeknights.tconstruct.library.recipe.modifiers.ModifierRecipeLookup;
 import slimeknights.tconstruct.library.recipe.modifiers.adding.IDisplayModifierRecipe;
 import slimeknights.tconstruct.library.recipe.tinkerstation.ITinkerStationRecipe;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
@@ -39,8 +37,16 @@ public class ModifierStack {
         stack.add(index + 1, info);
     }
 
+    /** Amount needed per level for the given modifier, derived from the matching stacked incremental recipe. */
+    public int getNeeded(Modifier modifier){
+        for (ModifierInfo info : stack) {
+            if(info.modifier.equals(modifier))return info.needed;
+        }
+        return 0;
+    }
+
     public void setIncrementalDiff(Modifier modifier, int amount){
-        incrementalDiffMap.put(modifier.getId(), Mth.clamp(amount,0, ModifierRecipeLookup.getNeededPerLevel(modifier.getId())));
+        incrementalDiffMap.put(modifier.getId(), Mth.clamp(amount,0, getNeeded(modifier)));
     }
 
     public int getIncrementalDiff(Modifier modifier){
@@ -48,7 +54,8 @@ public class ModifierStack {
     }
 
     public boolean isRecipeUsed(ITinkerStationRecipe recipe){
-        return stack.stream().anyMatch(info -> ((ITinkerStationRecipe)info.recipe).getId().equals(recipe.getId()));
+        ResourceLocation id = PlannerScreen.getRecipeId((IDisplayModifierRecipe) recipe);
+        return stack.stream().anyMatch(info -> java.util.Objects.equals(info.id, id));
     }
 
     public int getLevel(Modifier modifier){
@@ -58,9 +65,9 @@ public class ModifierStack {
     public void applyIncrementals(ToolStack tool){
         stack.stream().distinct().forEach(info -> {
             Modifier mod = info.modifier;
-            int amount = ModifierRecipeLookup.getNeededPerLevel(mod.getId());
+            int amount = info.needed;
             if(amount > 0){
-                IncrementalModifier.setAmount(tool.getPersistentData(), mod.getId(), amount - getIncrementalDiff(mod));
+                tool.addModifierAmount(mod.getId(), amount - getIncrementalDiff(mod), amount);
             }
         });
     }
@@ -73,7 +80,7 @@ public class ModifierStack {
         CompoundTag tag = new CompoundTag();
         ListTag modList = new ListTag();
         for (ModifierInfo info : stack) {
-            modList.add(StringTag.valueOf(((ITinkerStationRecipe)info.recipe).getId().toString()));
+            if(info.id != null)modList.add(StringTag.valueOf(info.id.toString()));
         }
         tag.put("mods", modList);
         ListTag diffList = new ListTag();
@@ -91,9 +98,11 @@ public class ModifierStack {
         stack.clear();
         incrementalDiffMap.clear();
         ListTag modList = tag.getList("mods", 8);
-        Map<ResourceLocation, IDisplayModifierRecipe> recipesMap = PlannerScreen.getModifierRecipes().stream().collect(Collectors.toMap(recipe -> ((ITinkerStationRecipe)recipe).getId(), recipe -> recipe));
+        Map<ResourceLocation, IDisplayModifierRecipe> recipesMap = PlannerScreen.getModifierRecipes().stream()
+                .filter(recipe -> PlannerScreen.getRecipeId(recipe) != null)
+                .collect(Collectors.toMap(PlannerScreen::getRecipeId, recipe -> recipe, (a, b) -> a));
         for(int i = 0; i < modList.size(); i++){
-            ResourceLocation resourceLocation = new ResourceLocation(modList.getString(i));
+            ResourceLocation resourceLocation = ResourceLocation.parse(modList.getString(i));
             if(recipesMap.containsKey(resourceLocation)) {
                 push(new ModifierInfo(recipesMap.get(resourceLocation)));
             }

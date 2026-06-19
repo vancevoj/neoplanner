@@ -1,8 +1,7 @@
 package net.tiffit.tconplanner.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.tiffit.tconplanner.api.TCSlotPos;
@@ -57,22 +56,17 @@ public class ToolTopPanel extends PlannerPanel{
     }
 
     @Override
-    public void render(PoseStack stack, int mouseX, int mouseY, float p_230430_4_) {
-        PoseStack itemModelStack = RenderSystem.getModelViewStack();
-        itemModelStack.pushPose();
-        itemModelStack.translate(x + TCSlotPos.partsOffsetX + 7, y + TCSlotPos.partsOffsetY + 22, -200);
-        itemModelStack.scale(3.7F, 3.7F, 1.0F);
-        Minecraft.getInstance().getItemRenderer().renderGuiItem(parent.blueprint.toolStack, 0, 0);
-        itemModelStack.popPose();
-        PlannerScreen.bindTexture();
+    protected void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        gui.pose().pushPose();
+        gui.pose().translate(getX() + TCSlotPos.partsOffsetX + 7, getY() + TCSlotPos.partsOffsetY + 22, 0);
+        gui.pose().scale(3.7F, 3.7F, 1.0F);
+        gui.renderItem(parent.blueprint.toolStack, 0, 0);
+        gui.pose().popPose();
         int boxX = 13, boxY = 24, boxL = 81;
-        if(mouseX > boxX + x && mouseY > boxY + y && mouseX < boxX + x + boxL && mouseY < boxY + y + boxL)
-            RenderSystem.setShaderColor(1f, 1f, 1f, 0.75f);
-        else RenderSystem.setShaderColor(1f, 1f, 1f, 0.5f);
-        RenderSystem.applyModelViewMatrix();
-        RenderSystem.enableBlend();
-        RenderSystem.disableDepthTest();
-        this.blit(stack, x + boxX, y + boxY, boxX, boxY, boxL, boxL);
-        super.render(stack, mouseX, mouseY, p_230430_4_);
+        float alpha = (mouseX > boxX + getX() && mouseY > boxY + getY() && mouseX < boxX + getX() + boxL && mouseY < boxY + getY() + boxL) ? 0.75f : 0.5f;
+        gui.setColor(1f, 1f, 1f, alpha);
+        gui.blit(PlannerScreen.TEXTURE, getX() + boxX, getY() + boxY, boxX, boxY, boxL, boxL);
+        gui.setColor(1f, 1f, 1f, 1f);
+        super.renderWidget(gui, mouseX, mouseY, partialTick);
     }
 }

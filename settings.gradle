@@ -1,0 +1,33 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        // NeoForged: ModDevGradle plugin + NeoForge artifacts
+        maven { url = 'https://maven.neoforged.net/releases' }
+        // Parchment mappings
+        maven { url = 'https://maven.parchmentmc.org' }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+// Tinkers' Planner compiles against the sibling NeoForge 1.21.1 ports of
+// Tinkers' Construct and Mantle. NeoTinkersConstruct is pulled in as a composite
+// build; it in turn composite-includes Mantle, so both the
+// `slimeknights.tconstruct:TConstruct` and `slimeknights.mantle:Mantle`
+// dependencies declared in build.gradle are substituted with those local builds.
+// Clone them next to this repo:
+//   git clone https://github.com/vancevoj/NeoTinkersConstruct ../NeoTinkersConstruct  (branch 1.21.1)
+//   git clone https://github.com/vancevoj/Mantle               ../Mantle             (branch 1.21)
+if (file('../NeoTinkersConstruct/settings.gradle').exists()) {
+    includeBuild '../NeoTinkersConstruct'
+} else if (file('../Mantle/settings.gradle').exists()) {
+    // Fallback: at least bring Mantle in directly if TConstruct is absent.
+    includeBuild '../Mantle'
+    logger.warn('WARNING: ../NeoTinkersConstruct not found; only Mantle included. Tinkers\' Planner needs both to compile.')
+} else {
+    logger.warn('WARNING: ../NeoTinkersConstruct not found. Tinkers\' Planner will not compile without it.')
+}
+
+rootProject.name = 'NeoTConPlanner'

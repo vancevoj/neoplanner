@@ -1,8 +1,8 @@
 package net.tiffit.tconplanner.screen.buttons;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -37,7 +37,7 @@ public class TooltipTextWidget extends AbstractWidget {
         setWidth(font.width(text));
         setHeight(font.lineHeight);
         if(pos == TextPosEnum.CENTER){
-            this.x -= getWidth()/2;
+            this.setX(getX() - getWidth()/2);
         }
     }
 
@@ -52,29 +52,28 @@ public class TooltipTextWidget extends AbstractWidget {
     }
 
     @Override
-    public void renderButton(PoseStack stack, int mouseX, int mouseY, float p_230431_4_) {
-        drawString(stack, font, getMessage(), x, y, color);
+    public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        gui.drawString(font, getMessage(), getX(), getY(), color);
         if(isHoveredOrFocused()){
-            renderToolTip(stack, mouseX, mouseY);
+            renderToolTip(gui, mouseX, mouseY);
         }
     }
 
-    @Override
-    public void renderToolTip(PoseStack stack, int mouseX, int mouseY) {
-        parent.postRenderTasks.add(() -> parent.renderComponentTooltip(stack, tooltip, mouseX, mouseY));
+    public void renderToolTip(GuiGraphics gui, int mouseX, int mouseY) {
+        parent.postRenderTasks.add(() -> gui.renderComponentTooltip(parent.getFont(), tooltip, mouseX, mouseY));
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (this.active && this.visible) {
-            return clicked(mouseX, mouseY) && onClick != null && onClick.onClick(mouseX, mouseY, mouseButton);
+            return isMouseOver(mouseX, mouseY) && onClick != null && onClick.onClick(mouseX, mouseY, mouseButton);
         } else {
             return false;
         }
     }
 
     @Override
-    public void updateNarration(NarrationElementOutput p_169152_) {}
+    protected void updateWidgetNarration(NarrationElementOutput p_169152_) {}
 
     public static interface IOnTooltipTextWidgetClick {
         boolean onClick(double mouseX, double mouseY, int mouseButton);

@@ -1,32 +1,28 @@
 package net.tiffit.tconplanner;
 
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.IExtensionPoint;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkConstants;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.tiffit.tconplanner.data.PlannerData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
-@Mod(TConPlanner.MODID)
+@Mod(value = TConPlanner.MODID, dist = Dist.CLIENT)
 public class TConPlanner {
     public static final Logger LOGGER = LogManager.getLogger();
     public static final String MODID = "tconplanner";
 
     public static PlannerData DATA;
 
-    public TConPlanner() {
-        ModLoadingContext mlctx = ModLoadingContext.get();
-        mlctx.registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
-        mlctx.registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
-
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setupClient);
+    public TConPlanner(IEventBus modBus, ModContainer container) {
+        container.registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
+        modBus.addListener(this::setupClient);
     }
 
     private void setupClient(final FMLClientSetupEvent event) {
