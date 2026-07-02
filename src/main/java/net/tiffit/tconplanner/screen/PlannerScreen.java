@@ -197,6 +197,7 @@ public class PlannerScreen extends Screen {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            net.tiffit.tconplanner.network.BookmarkClient.push();
         }
         refresh();
     }
@@ -209,6 +210,7 @@ public class PlannerScreen extends Screen {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            net.tiffit.tconplanner.network.BookmarkClient.push();
         }
         refresh();
     }
@@ -222,6 +224,7 @@ public class PlannerScreen extends Screen {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            net.tiffit.tconplanner.network.BookmarkClient.push();
         }
         refresh();
     }
@@ -234,6 +237,7 @@ public class PlannerScreen extends Screen {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            net.tiffit.tconplanner.network.BookmarkClient.push();
         }
         refresh();
     }

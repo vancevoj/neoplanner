@@ -120,6 +120,7 @@ public class EventListener {
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);
                         }
+                        net.tiffit.tconplanner.network.BookmarkClient.push();
                     }else{
                         movePartsToSlots(screen, mc, data.starred);
                     }

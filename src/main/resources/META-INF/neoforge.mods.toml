@@ -9,10 +9,10 @@ issueTrackerURL="https://github.com/vancevoj/neoplanner/issues"
     displayName="Neo Planner"
     logoFile="logo.png"
     authors="Tiffit, SpikyStars, vancevoj"
-    # Client-side mod: ignore version checks so it can connect to any server.
+    # Ignore version checks so the client still connects to vanilla / mod-less servers (bookmark sync is optional).
     displayTest="IGNORE_ALL_VERSION"
     description='''
-Neo Planner is a client-side mod which lets you try out different material and modifier combinations for Tinkers' Construct tools before actually making the tool. vancevoj's NeoForge 1.21.1 rebrand/port of Tiffit & SpikyStars' Tinkers' Planner ${mod_version}.
+Neo Planner lets you try out different material and modifier combinations for Tinkers' Construct tools before actually making the tool. Saved designs persist server-side per player on servers that also run Neo Planner, and fall back to a local file otherwise. vancevoj's NeoForge 1.21.1 rebrand/port of Tiffit & SpikyStars' Tinkers' Planner ${mod_version}.
     '''
     displayURL="https://github.com/vancevoj/neoplanner"
 
