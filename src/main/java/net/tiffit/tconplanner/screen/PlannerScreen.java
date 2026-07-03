@@ -123,6 +123,11 @@ public class PlannerScreen extends Screen {
     }
 
     @Override
+    protected void renderBlurredBackground(float partialTick) {
+        // keep the world crisp behind the planner (skip the vanilla blur shader)
+    }
+
+    @Override
     public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
         renderBackground(gui, mouseX, mouseY, partialTick);
         gui.blit(TEXTURE, left, top, 0, 0, guiWidth, guiHeight);

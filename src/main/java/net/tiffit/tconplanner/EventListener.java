@@ -212,8 +212,10 @@ public class EventListener {
     }
 
     private static void movePartsToSlots(TinkerStationScreen screen, Minecraft mc, Blueprint starred){
-        if(starred.tool.getLayout() != layout){
-            screen.onToolSelection(starred.tool.getLayout());
+        StationSlotLayout toolLayout = starred.tool.getLayout();
+        if(toolLayout == null) return; // armor/shields have no station layout: can't auto-fill on the Tinker Station
+        if(toolLayout != layout){
+            screen.onToolSelection(toolLayout);
             updateLayout(screen, true);
         }
         Player player = mc.player;

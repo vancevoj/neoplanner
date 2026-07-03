@@ -57,16 +57,9 @@ public class ToolTopPanel extends PlannerPanel{
 
     @Override
     protected void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        gui.pose().pushPose();
-        gui.pose().translate(getX() + TCSlotPos.partsOffsetX + 7, getY() + TCSlotPos.partsOffsetY + 22, 0);
-        gui.pose().scale(3.7F, 3.7F, 1.0F);
-        gui.renderItem(parent.blueprint.toolStack, 0, 0);
-        gui.pose().popPose();
-        int boxX = 13, boxY = 24, boxL = 81;
-        float alpha = (mouseX > boxX + getX() && mouseY > boxY + getY() && mouseX < boxX + getX() + boxL && mouseY < boxY + getY() + boxL) ? 0.75f : 0.5f;
-        gui.setColor(1f, 1f, 1f, alpha);
-        gui.blit(PlannerScreen.TEXTURE, getX() + boxX, getY() + boxY, boxX, boxY, boxL, boxL);
-        gui.setColor(1f, 1f, 1f, 1f);
+        // The big 3.7x tool preview (and its inset box) were removed: with no materials chosen the base tool
+        // rendered as a magenta missing-texture placeholder and looked broken. Selection shows on the left grid;
+        // only the per-part buttons render here.
         super.renderWidget(gui, mouseX, mouseY, partialTick);
     }
 }
