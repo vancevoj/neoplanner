@@ -1,6 +1,6 @@
 # Neo Planner
 
-This project is sparatically maintained! Do not expect regular updates. For regular updates, please navigate to [Neo Tinkers'](https://github.com/vancevoj/neotinkers) and [Neo Mantle](https://github.com/vancevoj/neomantle).
+This project is sporadically maintained! Do not expect regular updates. For regular updates, please navigate to [Neo Tinkers'](https://github.com/vancevoj/neotinkers) and [Neo Mantle](https://github.com/vancevoj/neomantle).
 
 This is **Minecraft 1.21.1 NeoForge** port of **Tinkers' Planner** by Tiffit & SpikyStars, an add-on for Tinkers' Construct.
 
